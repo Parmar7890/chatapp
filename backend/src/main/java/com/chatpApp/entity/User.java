@@ -1,13 +1,17 @@
 package com.chatpApp.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+
+import java.time.LocalDate;
 
 
-@Setter
-@Getter
+
+@Data
 @Entity
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "users")
 public class User {
 
@@ -15,10 +19,21 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "username", nullable = false)
     private String username;
 
     @Column(nullable = false)
+    private String email;
+
+    @Column(nullable = true)
     private String password;
+
+    @Column(nullable = true)
+    private LocalDate dob;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
+    private com.chatpApp.entity.Gender gender;
+
 
 }
