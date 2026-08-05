@@ -24,7 +24,7 @@ public class FriendRequest {
     private Long receiverId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = true)
     private RequestStatus status;
 
     @Column(nullable = false)

@@ -29,18 +29,20 @@ public class FriendRequestService {
         }
 
         friendRequestRepository.findBetweenUsers(senderId, receiverId).ifPresent(existing -> {
-            throw new ConflictException("Request alredy exists between these users");
+            throw new ConflictException("Request already exists between these users");
         });
 
         FriendRequest request = new FriendRequest();
         request.setSenderId(senderId);
         request.setReceiverId(receiverId);
 
+
         FriendRequest saved = friendRequestRepository.save(request);
         return toResponse(saved);
     }
 
     public FriendRequestResponse respondToRequest(Long requestId, boolean accept) {
+        System.out.print("reach:::service");
         FriendRequest request = friendRequestRepository.findById(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Friend request not found"));
 
@@ -52,7 +54,7 @@ public class FriendRequestService {
     }
 
     public List<FriendRequestResponse> getPendingRequests(Long userId) {
-        return friendRequestRepository.findByReceiverIdStatus(userId, FriendRequest.RequestStatus.PENDING)
+        return friendRequestRepository.findByReceiverIdAndStatus(userId, FriendRequest.RequestStatus.PENDING)
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());

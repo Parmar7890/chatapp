@@ -1,11 +1,12 @@
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import ChatScreen from './screens/ChatScreen';
+import FriendsList from './screens/FriendsList';
 import Register from './components/Register';
 import Login from './components/Login';
+import SearchUsers from './screens/SearchUsers';
 
 function App() {
-  // Load user from localStorage on initial render
   const [currentUser, setCurrentUser] = useState(() => {
     const savedUser = localStorage.getItem('currentUser');
     return savedUser ? JSON.parse(savedUser) : null;
@@ -13,25 +14,22 @@ function App() {
 
   const navigate = useNavigate();
 
-  const params = new URLSearchParams(window.location.search);
-  const RECEIVER_ID = Number(params.get('receiverId')) || 2;
-
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
-    localStorage.setItem('currentUser', JSON.stringify(user)); // Persist to localStorage
+    localStorage.setItem('currentUser', JSON.stringify(user));
     navigate('/');
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
-    localStorage.removeItem('currentUser'); // Clear on logout
+    localStorage.removeItem('currentUser');
     navigate('/login');
   };
 
   return (
     <div className="relative min-h-screen bg-gray-950">
       <Routes>
-        {/* Home Route (Chat Screen - Protected) */}
+        {/* Home Route (Friends List - Protected) */}
         <Route
           path="/"
           element={
@@ -45,7 +43,7 @@ function App() {
                     Logout
                   </button>
                 </div>
-                <ChatScreen myUserId={currentUser.id} receiverId={RECEIVER_ID} />
+                <FriendsList currentUser={currentUser} />
               </>
             ) : (
               <Navigate to="/login" replace />
@@ -53,6 +51,29 @@ function App() {
           }
         />
 
+        {/* Chat Route (Protected) */}
+        <Route
+          path="/chat"
+          element={
+            currentUser ? (
+              <ChatScreenWrapper currentUser={currentUser} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+{/* Search Route (Protected) */}
+<Route
+  path="/search"
+  element={
+    currentUser ? (
+      <SearchUsers currentUser={currentUser} />
+    ) : (
+      <Navigate to="/login" replace />
+    )
+  }
+/>
         {/* Login Route */}
         <Route
           path="/login"
@@ -82,6 +103,14 @@ function App() {
       </Routes>
     </div>
   );
+}
+
+// Small wrapper to read receiverId from URL for the chat route
+function ChatScreenWrapper({ currentUser }) {
+  const params = new URLSearchParams(window.location.search);
+  const receiverId = Number(params.get('receiverId'));
+
+  return <ChatScreen myUserId={currentUser.id} receiverId={receiverId} />;
 }
 
 export default App;

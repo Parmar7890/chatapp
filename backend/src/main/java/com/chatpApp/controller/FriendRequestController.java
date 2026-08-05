@@ -5,6 +5,7 @@ import com.chatpApp.dto.FriendRequestResponse;
 import com.chatpApp.service.FriendRequestService;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -24,6 +25,7 @@ public class FriendRequestController {
 
     @PutMapping("/{requestId}/accept")
     public FriendRequestResponse acceptRequest(@PathVariable Long requestId) {
+        System.out.print("reach:::controller");
         return friendRequestService.respondToRequest(requestId, true);
     }
 
