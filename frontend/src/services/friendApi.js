@@ -21,6 +21,7 @@ export async function sendFriendRequest(senderId, receiverId) {
 
 export async function getPendingRequests(userId) {
   const response = await fetch(`${API_URL}/friend-request/pending/${userId}`);
+  console.log(response)
   if (!response.ok) throw new Error('Failed to fetch pending requests');
   return response.json();
 }
@@ -37,7 +38,20 @@ export async function respondToRequest(requestId, accept) {
 
 export async function getFriends(userId) {
   const response = await fetch(`${API_URL}/friend-request/friends/${userId}`);
-   console.log("her55eere",response);
   if (!response.ok) throw new Error('Failed to fetch friends');
   return response.json();
+}
+
+export async function getRequestStatus(user1, user2) {
+  const response = await fetch(`${API_URL}/friend-request/status?user1=${user1}&user2=${user2}`);
+  if (!response.ok) throw new Error('Failed to fetch status');
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
+}
+
+export async function cancelFriendRequest(requestId) {
+  const response = await fetch(`${API_URL}/friend-request/${requestId}`, {
+    method: 'DELETE',
+  });
+  if(!response.ok) throw new Error('Failed to cancel request');
 }

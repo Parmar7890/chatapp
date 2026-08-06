@@ -11,6 +11,7 @@ import com.chatpApp.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,14 +28,26 @@ public class FriendRequestService {
         if(senderId.equals(receiverId)) {
             throw new BadRequestException("Cannot send request to yourself");
         }
+        Optional<FriendRequest> existing = friendRequestRepository.findBetweenUsers(senderId, receiverId);
 
-        friendRequestRepository.findBetweenUsers(senderId, receiverId).ifPresent(existing -> {
-            throw new ConflictException("Request already exists between these users");
-        });
+        if(existing.isPresent()) {
+            FriendRequest request = existing.get();
 
+            if(request.getStatus() == FriendRequest.RequestStatus.PENDING ||
+            request.getStatus() == FriendRequest.RequestStatus.ACCEPTED) {
+                throw new ConflictException("Request already exist between this users");
+            }
+
+            request.setSenderId(senderId);
+            request.setReceiverId(receiverId);
+            request.setStatus(FriendRequest.RequestStatus.PENDING);
+            FriendRequest updated = friendRequestRepository.save(request);
+            return toResponse(updated);
+        }
         FriendRequest request = new FriendRequest();
         request.setSenderId(senderId);
         request.setReceiverId(receiverId);
+
 
 
         FriendRequest saved = friendRequestRepository.save(request);
@@ -65,6 +78,19 @@ public class FriendRequestService {
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    public FriendRequestResponse getStatusBetween(Long user1, Long user2) {
+        return friendRequestRepository.findBetweenUsers(user1, user2)
+                .map(this::toResponse)
+                .orElse(null);
+    }
+
+    public void cancelRequest(Long requestId) {
+        FriendRequest request = friendRequestRepository.findById(requestId).
+                orElseThrow(() -> new ResourceNotFoundException("Request not found"));
+        friendRequestRepository.delete(request);
+
     }
 
     private FriendRequestResponse toResponse(FriendRequest fr) {

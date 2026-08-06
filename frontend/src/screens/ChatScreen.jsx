@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef   } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { connectWebSocket, sendMessage, disconnectWebSocket } from '../services/websocketService';
 import { fetchConversation } from '../services/api'
+import { Link } from "react-router-dom";
 
 export default function ChatScreen({ myUserId, receiverId }) {
   const [messages, setMessages] = useState([]);
@@ -42,10 +43,18 @@ export default function ChatScreen({ myUserId, receiverId }) {
 
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto font-sans border-x border-gray-800 bg-gray-900 text-gray-100">
-      <div className="text-center py-3 text-gray-400 border-b border-gray-800 text-sm">
-        {connected ? `Connected as User ${myUserId}` : 'Connecting...'}
-      </div>
+      <div className="relative flex items-center py-3 border-b border-gray-800">
+  <div className="w-full text-center text-gray-400 text-sm">
+    {connected ? `Connected as User ${myUserId}` : "Connecting..."}
+  </div>
 
+  <Link
+    to="/"
+    className="absolute right-0 text-blue-400 hover:text-blue-300"
+  >
+    Back
+  </Link>
+</div>
       <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-1">
         {messages.map((msg, index) => (
           <div

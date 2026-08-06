@@ -1,10 +1,12 @@
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ChatScreen from './screens/ChatScreen';
 import FriendsList from './screens/FriendsList';
 import Register from './components/Register';
 import Login from './components/Login';
 import SearchUsers from './screens/SearchUsers';
+import PendingRequests from './screens/PendingRequests';
+import { getFriends } from './services/friendApi'
 
 function App() {
   const [currentUser, setCurrentUser] = useState(() => {
@@ -63,17 +65,31 @@ function App() {
           }
         />
 
-{/* Search Route (Protected) */}
+      {/* Search Route (Protected) */}
+      <Route
+        path="/search"
+        element={
+          currentUser ? (
+            <SearchUsers currentUser={currentUser} />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+
+{/* Pending Requests Route (Protected) */}
 <Route
-  path="/search"
+  path="/requests"
   element={
     currentUser ? (
-      <SearchUsers currentUser={currentUser} />
+      <PendingRequests currentUser={currentUser} />
     ) : (
       <Navigate to="/login" replace />
     )
   }
 />
+
+
         {/* Login Route */}
         <Route
           path="/login"
@@ -104,13 +120,38 @@ function App() {
     </div>
   );
 }
-
-// Small wrapper to read receiverId from URL for the chat route
+export default App;
 function ChatScreenWrapper({ currentUser }) {
   const params = new URLSearchParams(window.location.search);
   const receiverId = Number(params.get('receiverId'));
+  const navigate = useNavigate();
+  const [checking, setChecking] = useState(true);
+  const [isFriend, setIsFriend] = useState(false);
+
+  useEffect(() => {
+    getFriends(currentUser.id)
+      .then((friends) => {
+        const friend = friends.some(
+          (f) => f.senderId === receiverId || f.receiverId === receiverId
+        );
+        setIsFriend(friend);
+        if (!friend) {
+          navigate('/');
+        }
+      })
+      .catch(() => navigate('/'))
+      .finally(() => setChecking(false));
+  }, [receiverId]);
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center text-gray-400">
+        Checking...
+      </div>
+    );
+  }
+
+  if (!isFriend) return null; // navigate already redirected
 
   return <ChatScreen myUserId={currentUser.id} receiverId={receiverId} />;
 }
-
-export default App;

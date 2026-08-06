@@ -25,7 +25,6 @@ public class FriendRequestController {
 
     @PutMapping("/{requestId}/accept")
     public FriendRequestResponse acceptRequest(@PathVariable Long requestId) {
-        System.out.print("reach:::controller");
         return friendRequestService.respondToRequest(requestId, true);
     }
 
@@ -36,6 +35,7 @@ public class FriendRequestController {
 
     @GetMapping("/pending/{userId}")
     public List<FriendRequestResponse> getPendingRequests(@PathVariable Long userId) {
+
         return friendRequestService.getPendingRequests(userId);
     }
 
@@ -44,5 +44,14 @@ public class FriendRequestController {
         return friendRequestService.getFriends(userId);
     }
 
+    @GetMapping("/status")
+    public FriendRequestResponse getStatus(@RequestParam Long user1, @RequestParam Long user2) {
+        return friendRequestService.getStatusBetween(user1, user2);
+    }
+
+    @DeleteMapping("/{requestId}")
+    public void cancelRequest(@PathVariable Long requestId) {
+        friendRequestService.cancelRequest(requestId);
+    }
 
 }
