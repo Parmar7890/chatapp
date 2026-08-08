@@ -4,16 +4,23 @@ import { WS_URL } from '../config/config';
 
 let stompClient = null;
 
-export function connectWebSocket(userId, onMessageReceived, onConnected) {
+export function connectWebSocket(userId, onMessageReceived, onMessageDeleted, onConnected) {
   stompClient = new Client({
     webSocketFactory: () => new SockJS(WS_URL),
     reconnectDelay: 5000,
     onConnect: () => {
       console.log('STOMP connected');
+
       stompClient.subscribe(`/queue/messages-${userId}`, (message) => {
         const body = JSON.parse(message.body);
         onMessageReceived(body);
       });
+
+      stompClient.subscribe(`/queue/messages-${userId}-deleted`, (message) => {
+        const body = JSON.parse(message.body);
+        onMessageDeleted(body);
+      });
+
       if (onConnected) onConnected();
     },
     onStompError: (frame) => console.error('STOMP error:', frame.headers['message']),

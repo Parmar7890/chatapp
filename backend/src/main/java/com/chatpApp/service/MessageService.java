@@ -6,6 +6,7 @@ import com.chatpApp.entity.Message;
 import com.chatpApp.exception.BadRequestException;
 import com.chatpApp.repository.FriendRequestRepository;
 import com.chatpApp.repository.MessageRepository;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -17,11 +18,14 @@ import java.util.stream.Collectors;
 
         private final MessageRepository messageRepository;
         private final FriendRequestRepository friendRequestRepository;
+        private final SimpMessagingTemplate messagingTemplate;
 
         public MessageService(MessageRepository messageRepository,
-                              FriendRequestRepository friendRequestRepository) {
+                              FriendRequestRepository friendRequestRepository,
+                              SimpMessagingTemplate messagingTemplate) {
             this.messageRepository = messageRepository;
             this.friendRequestRepository = friendRequestRepository;
+            this.messagingTemplate = messagingTemplate;
         }
 
         public MessageResponse saveMessage(MessageRequest request) {
@@ -52,8 +56,12 @@ import java.util.stream.Collectors;
                    Message message = messageRepository.findById(id)
                            .orElseThrow(() -> new UsernameNotFoundException("Message not found"));
 
-                        message.setDelete(true);
-                    messageRepository.save(message);
+                    message.setDelete(true);
+                    Message saved = messageRepository.save(message);
+                    MessageResponse response = toResponse(saved);
+
+            messagingTemplate.convertAndSend("/queue/messages-" + saved.getSenderId() + "-deleted", response);
+            messagingTemplate.convertAndSend("/queue/messages-" + saved.getReceiverId() + "-deleted", response);
         }
 
         public MessageResponse toResponse(Message message) {

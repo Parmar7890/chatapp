@@ -1,41 +1,59 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { connectWebSocket, sendMessage, disconnectWebSocket } from '../services/websocketService';
-import { fetchConversation, deleteMessage } from '../services/api'
+import { fetchConversation, deleteMessage } from '../services/api';
 import { Link } from "react-router-dom";
 
-
-
 export default function ChatScreen({ myUserId, receiverId }) {
-
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [connected, setConnected] = useState(false);
-  const bottomRef = useRef(null);
-  const [selectedMessageId, setSelectedMessageId] = useState(null);
-  const messageRef = useRef(null);
-
- 
-  useEffect(() => {
-
-    fetchConversation(myUserId, receiverId)
-    .then((history) => setMessages(history))
-    .catch((err) => console.log(err));
+  const [activeMenuMessageId, setActiveMenuMessageId] = useState(null);
   
+  const bottomRef = useRef(null);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    fetchConversation(myUserId, receiverId)
+      .then((history) => setMessages(history))
+      .catch((err) => console.error(err));
+
     connectWebSocket(
       myUserId,
       (newMessage) => {
         setMessages((prev) => [...prev, newMessage]);
       },
+      (deletedMessage) => {
+        setMessages((prev) => prev.filter((msg) => msg.id !== deletedMessage.id));
+      },
       () => setConnected(true)
     );
 
     return () => disconnectWebSocket();
-  }, [myUserId]);
+  }, [myUserId, receiverId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setActiveMenuMessageId(null);
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setActiveMenuMessageId(null);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -48,94 +66,118 @@ export default function ChatScreen({ myUserId, receiverId }) {
   };
 
   const handleDelete = async (id) => {
+    setActiveMenuMessageId(null);
+    
+    const previousMessages = [...messages];
+
+    setMessages((prev) => prev.filter((msg) => msg.id !== id));
+
+    try {
       await deleteMessage(id);
-  }
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (messageRef.current && !messageRef.current.contains(event.target)) {
-        setSelectedMessageId(null);
-      }
-    };
-  
-    document.addEventListener("click", handleClickOutside);
-  
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-    };
-  }, []);
-
+    } catch (err) {
+      console.error('Failed to delete message:', err);
+      setMessages(previousMessages);
+    }
+  };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-950 p-6">
-      {/* Tablet-Sized Container with Standard Border */}
-      <div className="w-full max-w-xl h-[600px] bg-gray-900 border border-gray-800 rounded-2xl flex flex-col shadow-xl text-gray-100 font-sans overflow-hidden">
+    <div className="flex justify-center items-center min-h-screen bg-gray-950 p-4 sm:p-6">
+      <div className="w-full max-w-xl h-[650px] bg-gray-900 border border-gray-800 rounded-2xl flex flex-col shadow-2xl text-gray-100 font-sans overflow-hidden">
         
-        {/* Header Bar */}
-        <div className="relative flex items-center py-3.5 px-4 border-b border-gray-800 bg-gray-900/50">
-          <div className="w-full text-center text-gray-400 text-sm font-medium">
-            {connected ? `Connected as User ${myUserId}` : "Connecting..."}
-          </div>
-  
+        <div className="relative flex items-center justify-between py-3.5 px-5 border-b border-gray-800 bg-gray-900/80 backdrop-blur-md z-10">
+          <span className="text-gray-300 text-sm font-medium">
+            User {receiverId}
+          </span>
+
           <Link
             to="/"
-            className="absolute right-4 text-sm font-medium text-blue-400 hover:text-blue-300 transition"
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 transition"
           >
-            Back
+            Exit
           </Link>
         </div>
-  
-        {/* Messages Container */}
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2.5">
-          {messages.map((msg, index) => (
-            !msg.deleted && (
-           <div
-              ref={selectedMessageId === msg.id ? messageRef : null}
-              key={msg.id}
-              onDoubleClick={() => {
-                if(myUserId === msg.senderId) {
-                  setSelectedMessageId(prev => prev === msg.id ? null : msg.id);
-                }
-              }}
-              className={`relative px-4 py-2.5 rounded-2xl max-w-[70%] break-words text-sm leading-relaxed ${
-                msg.senderId === myUserId
-                  ? "bg-emerald-600 text-white self-end rounded-br-xs"
-                  : "bg-gray-800 text-gray-100 self-start rounded-bl-xs border border-gray-750"
-              }`}
-            >
-              {msg.content}
 
-              {myUserId === msg.senderId && selectedMessageId === msg.id &&  (
-                <button
-                  onClick={() => handleDelete(msg.id)}
-                  className="absolute -right-10 top-1/2 -translate-y-1/2 text-red-500"
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+          {messages
+            .filter((msg) => !msg.delete && !msg.deleted)
+            .map((msg) => {
+              const isMe = msg.senderId === myUserId;
+              const isMenuOpen = activeMenuMessageId === msg.id;
+
+              return (
+                <div
+                  key={msg.id}
+                  className={`relative group flex flex-col ${isMe ? "items-end" : "items-start"}`}
                 >
-                  🗑️
-                </button>
-              )}
-            </div>
-            )
-          ))}
+                  <div
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      if (isMe) setActiveMenuMessageId(msg.id);
+                    }}
+                    onDoubleClick={() => {
+                      if (isMe) setActiveMenuMessageId(msg.id);
+                    }}
+                    className={`relative px-4 py-2.5 rounded-2xl max-w-[75%] break-words text-sm leading-relaxed transition-all duration-200 select-none ${
+                      isMe
+                        ? "bg-blue-600 text-white rounded-tr-xs shadow-md"
+                        : "bg-gray-800 text-gray-100 rounded-tl-xs border border-gray-750"
+                    }`}
+                  >
+                    {msg.content}
+
+                    {isMe && (
+                      <button
+                        onClick={() => setActiveMenuMessageId(isMenuOpen ? null : msg.id)}
+                        className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-black/20 text-white/80"
+                        title="Options"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+
+                  {isMenuOpen && (
+                    <div
+                      ref={menuRef}
+                      className="absolute z-20 top-full mt-1 right-0 w-36 bg-gray-800 border border-gray-700 rounded-xl shadow-xl py-1 animate-in fade-in zoom-in-95 duration-100 overflow-hidden"
+                    >
+                      <button
+                        onClick={() => handleDelete(msg.id)}
+                        className="w-full px-3.5 py-2 text-left text-xs font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 flex items-center gap-2 transition"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           <div ref={bottomRef} />
         </div>
-  
-        {/* Input Bar */}
-        <div className="flex p-4 border-t border-gray-800 gap-3 bg-gray-900/50 items-center">
+
+        <div className="flex p-3.5 border-t border-gray-800 gap-2.5 bg-gray-900/60 backdrop-blur-md items-center">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
-            className="flex-1 px-4 py-2.5 rounded-full border border-gray-700 bg-gray-800 text-gray-100 placeholder-gray-400 outline-none focus:border-blue-500 text-sm transition"
+            className="flex-1 px-4 py-2.5 rounded-xl border border-gray-750 bg-gray-800/80 text-gray-100 placeholder-gray-500 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm transition"
           />
           <button
             onClick={handleSend}
-            className="px-6 py-2.5 rounded-full bg-blue-600 text-white text-sm font-medium hover:bg-blue-500 transition"
+            disabled={!input.trim()}
+            className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500 disabled:opacity-40 disabled:hover:bg-blue-600 transition shadow-sm"
           >
             Send
           </button>
         </div>
+
       </div>
     </div>
   );
