@@ -6,6 +6,7 @@ import com.chatpApp.entity.Message;
 import com.chatpApp.exception.BadRequestException;
 import com.chatpApp.repository.FriendRequestRepository;
 import com.chatpApp.repository.MessageRepository;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -46,7 +47,24 @@ import java.util.stream.Collectors;
                     .collect(Collectors.toList());
         }
 
-        public MessageResponse toResponse(Message message) {
-            return new MessageResponse(message.getId(), message.getSenderId(), message.getReceiverId(), message.getContent(), message.getTimestamp());
+
+        public void deleteMessage(Long id) {
+                   Message message = messageRepository.findById(id)
+                           .orElseThrow(() -> new UsernameNotFoundException("Message not found"));
+
+                        message.setDelete(true);
+                    messageRepository.save(message);
         }
+
+        public MessageResponse toResponse(Message message) {
+            return new MessageResponse(
+                    message.getId(),
+                    message.getSenderId(),
+                    message.getReceiverId(),
+                    message.getContent(),
+                    message.isDelete(),
+                    message.getTimestamp());
+        }
+
+
     }

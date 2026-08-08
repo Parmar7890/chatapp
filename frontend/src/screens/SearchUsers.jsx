@@ -13,43 +13,36 @@ export default function SearchUsers({ currentUser }) {
     setMessage('');
     try {
       const data = await searchUsers(query);
-      const filtered = data.filter((u) => u.id !== currentUser.id);
+      setResults(data.filter((u) => u.id !== currentUser.id));
 
-      // fetch status for each result
       const withStatus = await Promise.all(
         filtered.map(async (user) => {
           const status = await getRequestStatus(currentUser.id, user.id);
-          return { ...user, requestStatus: status };
+          return {...user, requestStatus: status};
         })
-      );
-
-      setResults(withStatus);
+      )
     } catch (err) {
       setMessage('Search failed');
     }
   };
 
-  const handleSendRequest = async (targetUser) => {
+  const handleSendRequest = async (receiverId) => {
     try {
-      const newRequest = await sendFriendRequest(currentUser.id, targetUser.id);
-      setResults((prev) =>
-        prev.map((u) =>
-          u.id === targetUser.id ? { ...u, requestStatus: newRequest } : u
-        )
-      );
+      await sendFriendRequest(currentUser.id, receiverId);
+      setMessage('Friend request sent!');
     } catch (err) {
       setMessage(err.message || 'Failed to send request');
     }
   };
 
   const handleCancelRequest = async (targetUser) => {
-    try {
-      await cancelFriendRequest(targetUser.requestStatus.id);
-      setResults((prev) =>
-        prev.map((u) =>
-          u.id === targetUser.id ? { ...u, requestStatus: null } : u
-        )
-      );
+    try{
+        await cancelFriendRequest(targetUser.requestStatus.id);
+        setResults((prev) => {
+          prev.map((u) => 
+            u.id === targetUser.id ? {...u, requestStatus: null} : u
+          )
+        })
     } catch (err) {
       setMessage('Failed to cancel request');
     }
@@ -58,60 +51,54 @@ export default function SearchUsers({ currentUser }) {
   const renderActionButton = (user) => {
     const status = user.requestStatus?.status;
 
-    if (!status) {
+    if(!status) {
       return (
-        <button
-          onClick={() => handleSendRequest(user)}
-          className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-600 transition"
-        >
+        <button onClick={() => handleSendRequest(user)} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-600 transition">
           Send Request
         </button>
-      );
+      )
     }
 
-    if (status === 'PENDING') {
-      // only show cancel if current user was the sender
+    if(status === 'PENDING') {
       const iSent = user.requestStatus.senderId === currentUser.id;
-      if (iSent) {
+      if(iSent) {
         return (
-          <button
-            onClick={() => handleCancelRequest(user)}
-            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-yellow-700 hover:bg-yellow-600 transition"
-          >
-            Request Sent (Cancel)
+          <button className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-yellow-700 hover:bg-yellow-600 transition" onClick={() => handleCancelRequest(user)}>
+              Request Sent (Cancel)
           </button>
         );
       }
       return (
         <span className="px-3 py-1.5 text-xs font-semibold text-gray-400">
-          Respond in Requests
+          Respond in Requests 
         </span>
-      );
+      )
     }
 
-    if (status === 'ACCEPTED') {
+    if(status === 'ACCEPTED') {
       return (
         <span className="px-3 py-1.5 text-xs font-semibold text-emerald-400">
           Friends
         </span>
-      );
+      )
     }
 
-    // REJECTED — allow sending again
-    return (
-      <button
-        onClick={() => handleSendRequest(user)}
-        className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-600 transition"
-      >
-        Send Request
-      </button>
-    );
-  };
+    
+  return (
+    <button onClick={() => handleSendRequest(user)} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-600 transition">
+      Send Request
+    </button>
+  )
+  }
+
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 font-sans p-6 max-w-md mx-auto">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate('/')} className="text-gray-400 hover:text-white text-sm">
+        <button
+          onClick={() => navigate('/')}
+          className="text-gray-400 hover:text-white text-sm"
+        >
           ← Back
         </button>
         <h2 className="text-xl font-bold">Find Friends</h2>
@@ -125,7 +112,10 @@ export default function SearchUsers({ currentUser }) {
           placeholder="Search by username..."
           className="flex-1 bg-gray-800 border border-gray-700 text-gray-100 text-sm py-2.5 px-4 rounded-xl placeholder-gray-500 focus:outline-none focus:border-blue-500"
         />
-        <button type="submit" className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-semibold transition">
+        <button
+          type="submit"
+          className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-semibold transition"
+        >
           Search
         </button>
       </form>
@@ -138,9 +128,17 @@ export default function SearchUsers({ currentUser }) {
 
       <div className="flex flex-col gap-2">
         {results.map((user) => (
-          <div key={user.id} className="flex justify-between items-center px-4 py-3 rounded-xl bg-gray-900 border border-gray-800">
+          <div
+            key={user.id}
+            className="flex justify-between items-center px-4 py-3 rounded-xl bg-gray-900 border border-gray-800"
+          >
             <span>{user.username}</span>
-            {renderActionButton(user)}
+            <button
+              onClick={() => handleSendRequest(user.id)}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-600 transition"
+            >
+              Send Request
+            </button>
           </div>
         ))}
       </div>

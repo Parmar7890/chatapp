@@ -1,13 +1,13 @@
 package com.chatpApp.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
+@Data
 @Entity
 @Table(name = "message")
 public class Message {
@@ -32,5 +32,8 @@ public class Message {
     protected void onCreate() {
         this.timestamp  = LocalDateTime.now();
     }
+
+    @Column(nullable = false)
+    private boolean isDelete = false;
 
 }

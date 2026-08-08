@@ -7,3 +7,13 @@ export async function fetchConversation(user1, user2) {
     }
     return response.json();
 }
+
+export async function deleteMessage(id) {
+    const response = await fetch(`${API_URL}/messages/${id}`, {
+        method: "PUT",
+    });
+
+    if(!response.ok) {
+        throw new Error("Failed to delete message");
+    }
+}
