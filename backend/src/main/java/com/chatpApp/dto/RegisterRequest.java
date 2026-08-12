@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,6 +17,7 @@ import java.time.LocalDate;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class RegisterRequest {
     @NotBlank(message = "Full name is required")
     @Size(min = 2, max = 80)
@@ -34,6 +36,7 @@ public class RegisterRequest {
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
-    private MultipartFile profileImage;
+    private String imageUrl;
+    private MultipartFile image;
 
 }

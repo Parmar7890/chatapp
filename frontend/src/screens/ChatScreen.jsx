@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { connectWebSocket, sendMessage, disconnectWebSocket } from '../services/websocketService';
-import { fetchConversation, deleteMessage } from '../services/api';
+import { fetchConversation, deleteMessage, editMessage } from '../services/api';
 import { Link } from "react-router-dom";
 
 export default function ChatScreen({ myUserId, receiverId }) {
@@ -8,7 +8,8 @@ export default function ChatScreen({ myUserId, receiverId }) {
   const [input, setInput] = useState('');
   const [connected, setConnected] = useState(false);
   const [activeMenuMessageId, setActiveMenuMessageId] = useState(null);
-  
+  const [editingMessageId, setEditingMessageId] = useState(null); // NEW
+
   const bottomRef = useRef(null);
   const menuRef = useRef(null);
 
@@ -25,12 +26,19 @@ export default function ChatScreen({ myUserId, receiverId }) {
       (deletedMessage) => {
         setMessages((prev) => prev.filter((msg) => msg.id !== deletedMessage.id));
       },
+      (editedMessage) => {  // NEW
+        setMessages((prev) =>
+          prev.map((msg) => (msg.id === editedMessage.id ? editedMessage : msg))
+        );
+      },
       () => setConnected(true)
     );
 
     return () => disconnectWebSocket();
   }, [myUserId, receiverId]);
-
+useEffect(() => {
+  console.log(messages, "msg1")
+})
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -41,14 +49,11 @@ export default function ChatScreen({ myUserId, receiverId }) {
         setActiveMenuMessageId(null);
       }
     };
-
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') setActiveMenuMessageId(null);
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleKeyDown);
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
@@ -57,8 +62,24 @@ export default function ChatScreen({ myUserId, receiverId }) {
 
   const handleSend = () => {
     if (!input.trim()) return;
-    sendMessage(myUserId, receiverId, input.trim());
-    setInput('');
+
+    if (editingMessageId) {
+      // EDIT MODE
+      editMessage(editingMessageId, myUserId, receiverId, input.trim())
+        .then((updated) => {
+          setMessages((prev) =>
+            prev.map((msg) => (msg.id === updated.id ? updated : msg))
+          );
+        })
+        .catch((err) => console.error('Failed to edit:', err));
+
+      setEditingMessageId(null);
+      setInput('');
+    } else {
+      // NORMAL SEND MODE
+      sendMessage(myUserId, receiverId, input.trim());
+      setInput('');
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -67,11 +88,8 @@ export default function ChatScreen({ myUserId, receiverId }) {
 
   const handleDelete = async (id) => {
     setActiveMenuMessageId(null);
-    
     const previousMessages = [...messages];
-
     setMessages((prev) => prev.filter((msg) => msg.id !== id));
-
     try {
       await deleteMessage(id);
     } catch (err) {
@@ -80,19 +98,24 @@ export default function ChatScreen({ myUserId, receiverId }) {
     }
   };
 
+  const handleEditClick = (msg) => {
+    setActiveMenuMessageId(null);
+    setEditingMessageId(msg.id);
+    setInput(msg.content); // pre-fill input with existing content
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setInput('');
+  };
+
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-950 p-4 sm:p-6">
       <div className="w-full max-w-xl h-[650px] bg-gray-900 border border-gray-800 rounded-2xl flex flex-col shadow-2xl text-gray-100 font-sans overflow-hidden">
-        
-        <div className="relative flex items-center justify-between py-3.5 px-5 border-b border-gray-800 bg-gray-900/80 backdrop-blur-md z-10">
-          <span className="text-gray-300 text-sm font-medium">
-            User {receiverId}
-          </span>
 
-          <Link
-            to="/"
-            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 transition"
-          >
+        <div className="relative flex items-center justify-between py-3.5 px-5 border-b border-gray-800 bg-gray-900/80 backdrop-blur-md z-10">
+          <span className="text-gray-300 text-sm font-medium">User {receiverId}</span>
+          <Link to="/" className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 transition">
             Exit
           </Link>
         </div>
@@ -105,31 +128,19 @@ export default function ChatScreen({ myUserId, receiverId }) {
               const isMenuOpen = activeMenuMessageId === msg.id;
 
               return (
-                <div
-                  key={msg.id}
-                  className={`relative group flex flex-col ${isMe ? "items-end" : "items-start"}`}
-                >
+                <div key={msg.id} className={`relative group flex flex-col ${isMe ? "items-end" : "items-start"}`}>
                   <div
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      if (isMe) setActiveMenuMessageId(msg.id);
-                    }}
-                    onDoubleClick={() => {
-                      if (isMe) setActiveMenuMessageId(msg.id);
-                    }}
+                    onContextMenu={(e) => { e.preventDefault(); if (isMe) setActiveMenuMessageId(msg.id); }}
+                    onDoubleClick={() => { if (isMe) setActiveMenuMessageId(msg.id); }}
                     className={`relative px-4 py-2.5 rounded-2xl max-w-[75%] break-words text-sm leading-relaxed transition-all duration-200 select-none ${
-                      isMe
-                        ? "bg-blue-600 text-white rounded-tr-xs shadow-md"
-                        : "bg-gray-800 text-gray-100 rounded-tl-xs border border-gray-750"
+                      isMe ? "bg-blue-600 text-white rounded-tr-xs shadow-md" : "bg-gray-800 text-gray-100 rounded-tl-xs border border-gray-750"
                     }`}
                   >
                     {msg.content}
-
                     {isMe && (
                       <button
                         onClick={() => setActiveMenuMessageId(isMenuOpen ? null : msg.id)}
                         className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-black/20 text-white/80"
-                        title="Options"
                       >
                         <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
@@ -139,18 +150,18 @@ export default function ChatScreen({ myUserId, receiverId }) {
                   </div>
 
                   {isMenuOpen && (
-                    <div
-                      ref={menuRef}
-                      className="absolute z-20 top-full mt-1 right-0 w-36 bg-gray-800 border border-gray-700 rounded-xl shadow-xl py-1 animate-in fade-in zoom-in-95 duration-100 overflow-hidden"
-                    >
+                    <div ref={menuRef} className="absolute z-20 top-full mt-1 right-0 w-36 bg-gray-800 border border-gray-700 rounded-xl shadow-xl py-1 overflow-hidden">
                       <button
                         onClick={() => handleDelete(msg.id)}
                         className="w-full px-3.5 py-2 text-left text-xs font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 flex items-center gap-2 transition"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
                         Delete
+                      </button>
+                      <button
+                        onClick={() => handleEditClick(msg)}
+                        className="w-full px-3.5 py-2 text-left text-xs font-medium text-gray-300 hover:bg-gray-700 flex items-center gap-2 transition"
+                      >
+                        Edit
                       </button>
                     </div>
                   )}
@@ -159,6 +170,13 @@ export default function ChatScreen({ myUserId, receiverId }) {
             })}
           <div ref={bottomRef} />
         </div>
+
+        {editingMessageId && (
+          <div className="px-4 py-1.5 bg-gray-800/60 text-xs text-blue-400 flex justify-between items-center">
+            <span>Editing message...</span>
+            <button onClick={handleCancelEdit} className="text-gray-400 hover:text-white">Cancel</button>
+          </div>
+        )}
 
         <div className="flex p-3.5 border-t border-gray-800 gap-2.5 bg-gray-900/60 backdrop-blur-md items-center">
           <input
@@ -174,7 +192,7 @@ export default function ChatScreen({ myUserId, receiverId }) {
             disabled={!input.trim()}
             className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500 disabled:opacity-40 disabled:hover:bg-blue-600 transition shadow-sm"
           >
-            Send
+            {editingMessageId ? "Update" : "Send"}
           </button>
         </div>
 

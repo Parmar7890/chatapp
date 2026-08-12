@@ -4,6 +4,7 @@ import com.chatpApp.dto.MessageRequest;
 import com.chatpApp.dto.MessageResponse;
 import com.chatpApp.entity.Message;
 import com.chatpApp.exception.BadRequestException;
+import com.chatpApp.exception.ResourceNotFoundException;
 import com.chatpApp.repository.FriendRequestRepository;
 import com.chatpApp.repository.MessageRepository;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -64,6 +65,23 @@ import java.util.stream.Collectors;
             messagingTemplate.convertAndSend("/queue/messages-" + saved.getReceiverId() + "-deleted", response);
         }
 
+        public MessageResponse messageUpdate(Long id, MessageRequest request) {
+            Message message = messageRepository.findById(id).
+                    orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+            if(!request.getSenderId().equals(message.getSenderId())) {
+                throw new BadRequestException("You can not edit your own message");
+            }
+
+            message.setContent(request.getContent());
+            Message saved = messageRepository.save(message);
+            MessageResponse response = toResponse(saved);
+
+            messagingTemplate.convertAndSend("/queue/messages-" + saved.getSenderId() + "-edited", response);
+            messagingTemplate.convertAndSend("/queue/messages-" + saved.getReceiverId() + "-edited", response);
+            return response;
+        }
+
         public MessageResponse toResponse(Message message) {
             return new MessageResponse(
                     message.getId(),
@@ -73,6 +91,5 @@ import java.util.stream.Collectors;
                     message.isDelete(),
                     message.getTimestamp());
         }
-
 
     }

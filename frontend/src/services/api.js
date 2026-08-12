@@ -17,3 +17,16 @@ export async function deleteMessage(id) {
         throw new Error("Failed to delete message");
     }
 }
+
+export async function editMessage(id, senderId, receiverId, content) {
+    const response = await fetch(`${API_URL}/messages/update/${id}`, {
+        method: "PUT",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ senderId, receiverId, content}),
+    });
+
+    if(!response.ok) {
+        throw new Error("Failed to delete message");
+    }
+    return response.json();
+}

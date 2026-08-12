@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -22,7 +23,10 @@ public class AuthController {
     }
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<RegisterResponse> register(@Valid @ModelAttribute RegisterRequest request) {
+    public ResponseEntity<RegisterResponse> register(
+            @Valid @ModelAttribute RegisterRequest request,
+            @RequestParam(value = "image", required = false) MultipartFile image) {
+        request.setImage(image);
         RegisterResponse registerResponse = userService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(registerResponse);
     }

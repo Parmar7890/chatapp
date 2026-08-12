@@ -5,8 +5,15 @@ import com.chatpApp.entity.User;
 import com.chatpApp.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,11 +30,14 @@ public class UserService {
 
     public RegisterResponse register(RegisterRequest request) {
 
+        String imageUrl = resolveImageUrl(request);
+
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .dob(request.getDob())
+                .imgUrl(imageUrl)
                 .gender(request.getGender())
                 .build();
 
@@ -38,11 +48,33 @@ public class UserService {
                 .username(savedUser.getUsername())
                 .email(savedUser.getEmail())
                 .dob(savedUser.getDob())
+                .imageUrl(savedUser.getImgUrl())
                 .gender(savedUser.getGender())
                 .build();
     }
 
+    private String resolveImageUrl(RegisterRequest request) {
+        if(request.getImage() != null && !request.getImage().isEmpty()) {
+            return saveProductImage(request.getImage());
+        }
+        throw new IllegalArgumentException("Image filed is required");
+    }
 
+    public String saveProductImage(MultipartFile file) {
+        try {
+            String folder = "uploads/product-images/";
+            Files.createDirectories(Paths.get(folder));
+
+            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            Path filePath = Paths.get(folder + filename);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            return "uploads/product-images/" + filename;
+
+        } catch(IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Fail to save to the product image", e);
+        }
+    }
 
     public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())

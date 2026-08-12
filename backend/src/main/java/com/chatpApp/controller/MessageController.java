@@ -1,6 +1,7 @@
 package com.chatpApp.controller;
 
 
+import com.chatpApp.dto.MessageRequest;
 import com.chatpApp.dto.MessageResponse;
 import com.chatpApp.entity.Message;
 import com.chatpApp.service.MessageService;
@@ -29,5 +30,11 @@ public class MessageController {
     public ResponseEntity<String> deleteMessage(@PathVariable Long id) {
         messageService.deleteMessage(id);
         return ResponseEntity.ok("Message deleted successfully");
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<MessageResponse> updateMessage(@PathVariable Long id, @RequestBody MessageRequest request) {
+        MessageResponse response = messageService.messageUpdate(id, request);
+        return ResponseEntity.ok(response);
     }
 }

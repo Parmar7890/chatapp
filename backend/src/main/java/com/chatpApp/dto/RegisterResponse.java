@@ -1,21 +1,22 @@
-package com.chatpApp.dto;
+    package com.chatpApp.dto;
 
-import com.chatpApp.entity.Gender;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+    import com.chatpApp.entity.Gender;
+    import lombok.AllArgsConstructor;
+    import lombok.Builder;
+    import lombok.Data;
 
-import java.time.LocalDate;
+    import java.time.LocalDate;
 
-@Data
-@AllArgsConstructor
-@Builder
-public class RegisterResponse {
+    @Data
+    @AllArgsConstructor
+    @Builder
+    public class RegisterResponse {
 
-    private Long id;
-    private String username;
-    private String email;
-    private LocalDate dob;
-    private Gender gender;
-}
+        private Long id;
+        private String username;
+        private String email;
+        private LocalDate dob;
+        private Gender gender;
+        private String imageUrl;
+    }
 

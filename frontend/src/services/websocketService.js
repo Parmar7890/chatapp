@@ -4,7 +4,7 @@ import { WS_URL } from '../config/config';
 
 let stompClient = null;
 
-export function connectWebSocket(userId, onMessageReceived, onMessageDeleted, onConnected) {
+export function connectWebSocket(userId, onMessageReceived, onMessageDeleted, onMessageEdited, onConnected) {
   stompClient = new Client({
     webSocketFactory: () => new SockJS(WS_URL),
     reconnectDelay: 5000,
@@ -20,6 +20,11 @@ export function connectWebSocket(userId, onMessageReceived, onMessageDeleted, on
         const body = JSON.parse(message.body);
         onMessageDeleted(body);
       });
+
+      stompClient.subscribe(`/queue/messages-${userId}-edited`, (message) => {
+        const body = JSON.parse(message.body);
+        onMessageEdited(body);
+      })
 
       if (onConnected) onConnected();
     },
@@ -40,9 +45,11 @@ export function sendMessage(senderId, receiverId, content) {
   });
 }
 
+
 export function disconnectWebSocket() {
   if (stompClient) {
     stompClient.deactivate();
     stompClient = null;
   }
 }
+

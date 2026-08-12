@@ -55,7 +55,7 @@ public class FriendRequestService {
     }
 
     public FriendRequestResponse respondToRequest(Long requestId, boolean accept) {
-        System.out.print("reach:::service");
+
         FriendRequest request = friendRequestRepository.findById(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Friend request not found"));
 
