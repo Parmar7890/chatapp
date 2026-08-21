@@ -9,6 +9,7 @@ import Login from './components/Login';
 import SearchUsers from './screens/SearchUsers';
 import PendingRequests from './screens/PendingRequests';
 import { getFriends } from './services/friendApi';
+import MapScreen from './screens/MapScreen';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(() => {
@@ -34,6 +35,16 @@ function App() {
   return (
     <div className="relative min-h-screen bg-gray-950">
       <Routes>
+      <Route
+        path="/map"
+        element={
+          currentUser ? (
+            <MapScreen currentUser={currentUser} currentGeohash={currentGeohash} />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
         {/* Home Route = Group Chat (Protected) */}
         <Route
           path="/"

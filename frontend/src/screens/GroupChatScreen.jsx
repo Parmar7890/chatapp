@@ -20,6 +20,7 @@ export default function GroupChatScreen({ currentUser, onGeohashResolved }) {
     let isMounted = true;
 
     async function handleLocationUpdate({ latitude, longitude }) {
+      
       const now = Date.now();
 
      
@@ -88,6 +89,9 @@ export default function GroupChatScreen({ currentUser, onGeohashResolved }) {
         <div className="flex items-center justify-between py-3.5 px-5 border-b border-gray-800">
           <span className="text-sm text-gray-300">{status}</span>
           <div className="flex gap-2">
+          <Link to="/map" className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700">
+              Map
+            </Link>
             <Link to="/current-users" className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700">
               Nearby Users
             </Link>
