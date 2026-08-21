@@ -1,32 +1,37 @@
-import { API_URL } from '../config/config'
+import { API_URL } from '../config/config';
+import axiosInstance from '../config/axiosConfig';
 
-export async function fetchConversation(user1, user2) {
-    const response = await fetch(`${API_URL}/messages/${user1}/${user2}`);
-    if(!response.ok) {
-        throw new Error('Failed to fetch conversation');
-    }
-    return response.json();
+
+export const fetchConversation = async (user1, user2) => {
+    const response = await axiosInstance.get(`/messages/${user1}/${user2}`);
+    return response.data;
 }
 
-export async function deleteMessage(id) {
-    const response = await fetch(`${API_URL}/messages/${id}`, {
-        method: "PUT",
-    });
 
-    if(!response.ok) {
+
+export const deleteMessage = async (id) => {
+    const response = await axiosInstance.put(`/messages/${id}`);
+
+    if (response.status !== 200) {
         throw new Error("Failed to delete message");
     }
-}
 
-export async function editMessage(id, senderId, receiverId, content) {
-    const response = await fetch(`${API_URL}/messages/update/${id}`, {
-        method: "PUT",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ senderId, receiverId, content}),
-    });
+    return response.data;
+};
 
-    if(!response.ok) {
-        throw new Error("Failed to delete message");
-    }
-    return response.json();
-}
+
+
+
+
+export const editMessage = async (id, senderId, receiverId, content) => {
+    const response = await axiosInstance.put(
+        `/messages/update/${id}`,
+        {
+            senderId,
+            receiverId,
+            content
+        }
+    );
+
+    return response.data;
+};

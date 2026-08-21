@@ -5,6 +5,7 @@ import { registerUser } from '../services/authApi';
 const Register = () => {
   const navigate = useNavigate();
   const [message, setMessage] = useState("");
+  const [image, setImage] = useState(null);
   const [form, setForm] = useState({
     username: "",
     email: "",
@@ -28,6 +29,7 @@ const Register = () => {
       formData.append("password", form.password);
       formData.append("dob", form.dob);
       formData.append("gender", form.gender);
+      formData.append("image", image);
 
       await registerUser(formData);
       setMessage("Registered Successfully! Redirecting to login...");
@@ -36,7 +38,7 @@ const Register = () => {
         navigate('/login');
       }, 1500);
     } catch (err) {
-      setMessage(err.response?.data || "Registration Failed");
+      setMessage(err.response?.data?.message || "Registration Failed");
     }
   };
 
@@ -99,7 +101,15 @@ const Register = () => {
             <option value="FEMALE">Female</option>
             <option value="OTHER">Other</option>
           </select>
-
+          
+          <input
+              type="file"
+              name="image"
+              accept="image/*"
+              onChange={(e) => setImage(e.target.files[0])}
+              required
+              className="w-full bg-gray-800 border border-gray-700 text-gray-100 text-sm py-2.5 px-4 rounded-xl"
+            />
           <button 
             type="submit" 
             className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm py-2.5 px-4 rounded-xl shadow-md transition-colors mt-2 cursor-pointer"

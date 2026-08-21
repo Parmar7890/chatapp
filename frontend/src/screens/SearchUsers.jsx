@@ -7,6 +7,7 @@ export default function SearchUsers({ currentUser }) {
   const [results, setResults] = useState([]);
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
+  
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -53,7 +54,7 @@ export default function SearchUsers({ currentUser }) {
 
     if(!status) {
       return (
-        <button onClick={() => handleSendRequest(user)} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-600 transition">
+        <button onClick={() => handleSendRequest(user)} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-600 transition cursor-pointer">
           Send Request
         </button>
       )
@@ -63,7 +64,7 @@ export default function SearchUsers({ currentUser }) {
       const iSent = user.requestStatus.senderId === currentUser.id;
       if(iSent) {
         return (
-          <button className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-yellow-700 hover:bg-yellow-600 transition" onClick={() => handleCancelRequest(user)}>
+          <button className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-yellow-700 hover:bg-yellow-600 transition cursor-pointer" onClick={() => handleCancelRequest(user)}>
               Request Sent (Cancel)
           </button>
         );
@@ -85,7 +86,7 @@ export default function SearchUsers({ currentUser }) {
 
     
   return (
-    <button onClick={() => handleSendRequest(user)} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-600 transition">
+    <button onClick={() => handleSendRequest(user)} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-600 transition cursor-pointer">
       Send Request
     </button>
   )
@@ -97,7 +98,7 @@ export default function SearchUsers({ currentUser }) {
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => navigate('/')}
-          className="text-gray-400 hover:text-white text-sm"
+          className="text-gray-400 hover:text-white text-sm cursor-pointer"
         >
           ← Back
         </button>
@@ -114,7 +115,7 @@ export default function SearchUsers({ currentUser }) {
         />
         <button
           type="submit"
-          className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-semibold transition"
+          className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-semibold transition cursor-pointer"
         >
           Search
         </button>
@@ -135,7 +136,7 @@ export default function SearchUsers({ currentUser }) {
             <span>{user.username}</span>
             <button
               onClick={() => handleSendRequest(user.id)}
-              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-600 transition"
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-600 transition cursor-pointer"
             >
               Send Request
             </button>

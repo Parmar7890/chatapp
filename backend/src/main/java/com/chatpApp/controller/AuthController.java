@@ -42,5 +42,6 @@ public class AuthController {
     public List<UserSearchResponse> search(@RequestParam String username) {
         return userService.searchUsers(username);
     }
+
 }
 

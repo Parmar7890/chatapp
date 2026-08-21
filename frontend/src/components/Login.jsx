@@ -13,12 +13,12 @@ const Login = ({ onLoginSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
-
+  
     try {
       const data = await loginUser(form);
       onLoginSuccess(data);
     } catch (err) {
-      setMessage(err.response?.data || 'Login Failed');
+      setMessage(err.response?.data?.message || 'Login Failed');
     }
   };
 

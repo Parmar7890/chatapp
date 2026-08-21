@@ -9,19 +9,12 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @AllArgsConstructor
-public class FriendRequestResponse {
+public class GroupMessageResponse {
 
     private Long id;
+    private String geohash;
     private Long senderId;
     private String senderUsername;
-    private Long receiverId;
-
-    private String receiverUsername;
-
-    private String senderImageUrl;
-    private String receiverImageUrl;
-
-    private String status;
-    private LocalDateTime createdAt;
-
+    private String content;
+    private LocalDateTime timestamp;
 }

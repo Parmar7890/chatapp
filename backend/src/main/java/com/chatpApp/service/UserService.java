@@ -1,17 +1,23 @@
 package com.chatpApp.service;
 
+//import com.chatpApp.dto.*;
 import com.chatpApp.dto.*;
+import org.locationtech.jts.geom.Point;
+import com.chatpApp.entity.GeoHashUtil;
 import com.chatpApp.entity.User;
 import com.chatpApp.repository.UserRepository;
+import com.chatpApp.util.GeoUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -88,6 +94,7 @@ public class UserService {
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .profileImage(user.getImgUrl())
                 .message("Login successful")
                 .build();
     }
@@ -99,4 +106,6 @@ public class UserService {
                 .map(u -> new UserSearchResponse(u.getId(), u.getUsername()))
                 .collect(Collectors.toList());
     }
+
+
 }

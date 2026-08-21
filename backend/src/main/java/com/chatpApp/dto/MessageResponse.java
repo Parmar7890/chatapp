@@ -16,6 +16,7 @@ public class MessageResponse {
     private Long id;
     private Long senderId;
     private Long receiverId;
+//    private String receiverUsername;
     private String content;
     private boolean isDeleted;
     private LocalDateTime timestamp;

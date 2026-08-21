@@ -3,7 +3,7 @@ package com.chatpApp.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.awt.*;
+import org.locationtech.jts.geom.Point;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -35,7 +35,10 @@ public class User {
     @Column(columnDefinition = "geography(Point,4326)")
     private Point location;
 
-    private LocalDateTime localDateTime;
+    @Column(nullable = true)
+    private String currentGeohash;
+
+    private LocalDateTime locationUpdatedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = true)

@@ -36,7 +36,6 @@ public class RegisterRequest {
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
-    private String imageUrl;
     private MultipartFile image;
 
 }

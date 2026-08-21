@@ -1,32 +1,24 @@
-const API_BASE_URL = 'http://localhost:8080/api/auth';
+
+import axiosInstance from "../config/axiosConfig";
+
 
 export const registerUser = async (formData) => {
-  const response = await fetch(`${API_BASE_URL}/register`, {
-    method: 'POST',
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const errorData = await response.text();
-    throw { response: { data: errorData } };
+  try {
+      const response = await axiosInstance.post("/auth/register", formData);
+      return response.data;
+  } catch (error) {
+      throw error;
   }
-
-  return await response.json();
 };
 
 export const loginUser = async (loginData) => {
-  const response = await fetch(`${API_BASE_URL}/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(loginData),
-  });
+  try {
+      const response = await axiosInstance.post("/auth/login", loginData);
 
-  if (!response.ok) {
-    const errorData = await response.text();
-    throw { response: { data: errorData } };
+      console.log(response, "currentuser");
+
+      return response.data;
+  } catch (error) {
+      throw error;
   }
-
-  return await response.json();
 };

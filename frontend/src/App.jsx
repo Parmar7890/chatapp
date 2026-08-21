@@ -2,11 +2,13 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import ChatScreen from './screens/ChatScreen';
 import FriendsList from './screens/FriendsList';
+import GroupChatScreen from './screens/GroupChatScreen';
+import CurrentUsersScreen from './screens/CurrentUserScreen';
 import Register from './components/Register';
 import Login from './components/Login';
 import SearchUsers from './screens/SearchUsers';
 import PendingRequests from './screens/PendingRequests';
-import { getFriends } from './services/friendApi'
+import { getFriends } from './services/friendApi';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(() => {
@@ -14,6 +16,7 @@ function App() {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
+  const [currentGeohash, setCurrentGeohash] = useState(null);
   const navigate = useNavigate();
 
   const handleLoginSuccess = (user) => {
@@ -31,7 +34,7 @@ function App() {
   return (
     <div className="relative min-h-screen bg-gray-950">
       <Routes>
-        {/* Home Route (Friends List - Protected) */}
+        {/* Home Route = Group Chat (Protected) */}
         <Route
           path="/"
           element={
@@ -45,8 +48,32 @@ function App() {
                     Logout
                   </button>
                 </div>
-                <FriendsList currentUser={currentUser} />
+                <GroupChatScreen currentUser={currentUser} onGeohashResolved={setCurrentGeohash} />
               </>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        {/* Nearby Users in current zone (NEW) */}
+        <Route
+          path="/current-users"
+          element={
+            currentUser ? (
+              <CurrentUsersScreen currentUser={currentUser} currentGeohash={currentGeohash} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        {/* Friends List (MOVED from "/" to "/friends") */}
+        <Route
+          path="/friends"
+          element={
+            currentUser ? (
+              <FriendsList currentUser={currentUser} />
             ) : (
               <Navigate to="/login" replace />
             )
@@ -65,30 +92,29 @@ function App() {
           }
         />
 
-      {/* Search Route (Protected) */}
-      <Route
-        path="/search"
-        element={
-          currentUser ? (
-            <SearchUsers currentUser={currentUser} />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
-      />
+        {/* Search Route (Protected) */}
+        <Route
+          path="/search"
+          element={
+            currentUser ? (
+              <SearchUsers currentUser={currentUser} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
 
-{/* Pending Requests Route (Protected) */}
-<Route
-  path="/requests"
-  element={
-    currentUser ? (
-      <PendingRequests currentUser={currentUser} />
-    ) : (
-      <Navigate to="/login" replace />
-    )
-  }
-/>
-
+        {/* Pending Requests Route (Protected) */}
+        <Route
+          path="/requests"
+          element={
+            currentUser ? (
+              <PendingRequests currentUser={currentUser} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
 
         {/* Login Route */}
         <Route
@@ -120,28 +146,40 @@ function App() {
     </div>
   );
 }
+
 export default App;
+
 function ChatScreenWrapper({ currentUser }) {
   const params = new URLSearchParams(window.location.search);
   const receiverId = Number(params.get('receiverId'));
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
   const [isFriend, setIsFriend] = useState(false);
+  const [receiverName, setReceiverName] = useState('');
 
   useEffect(() => {
     getFriends(currentUser.id)
       .then((friends) => {
-        const friend = friends.some(
+        const friend = friends.find(
           (f) => f.senderId === receiverId || f.receiverId === receiverId
         );
-        setIsFriend(friend);
+
         if (!friend) {
           navigate('/');
+          return;
         }
+
+        const name =
+          friend.senderId === currentUser.id
+            ? friend.receiverUsername
+            : friend.senderUsername;
+
+        setReceiverName(name);
+        setIsFriend(true);
       })
       .catch(() => navigate('/'))
       .finally(() => setChecking(false));
-  }, [receiverId]);
+  }, [currentUser.id, receiverId]);
 
   if (checking) {
     return (
@@ -151,7 +189,13 @@ function ChatScreenWrapper({ currentUser }) {
     );
   }
 
-  if (!isFriend) return null; // navigate already redirected
+  if (!isFriend) return null;
 
-  return <ChatScreen myUserId={currentUser.id} receiverId={receiverId} />;
+  return (
+    <ChatScreen
+      myUserId={currentUser.id}
+      receiverId={receiverId}
+      receiverName={receiverName}
+    />
+  );
 }

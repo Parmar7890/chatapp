@@ -40,7 +40,7 @@ return (
         <div className="flex items-center gap-3 mb-6">
           <button
             onClick={() => navigate('/')}
-            className="text-gray-400 hover:text-white text-sm font-medium transition"
+            className="text-gray-400 hover:text-white text-sm font-medium transition cursor-pointer"
           >
             ← Back
           </button>
@@ -73,13 +73,13 @@ return (
               <div className="flex gap-2">
                 <button
                   onClick={() => handleRespond(req.id, true)}
-                  className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 transition text-white"
+                  className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 transition text-white cursor-pointer"
                 >
                   Accept
                 </button>
                 <button
                   onClick={() => handleRespond(req.id, false)}
-                  className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-red-700 hover:bg-red-600 transition text-white"
+                  className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-red-700 hover:bg-red-600 transition text-white cursor-pointer"
                 >
                   Reject
                 </button>

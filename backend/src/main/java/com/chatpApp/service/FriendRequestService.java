@@ -94,11 +94,12 @@ public class FriendRequestService {
     }
 
     private FriendRequestResponse toResponse(FriendRequest fr) {
+
         User sender = userRepository.findById(fr.getSenderId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sender not found"));
 
         User receiver = userRepository.findById(fr.getReceiverId())
-                .orElseThrow(() -> new ResourceNotFoundException("receiver not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Receiver not found"));
 
         return new FriendRequestResponse(
                 fr.getId(),
@@ -106,6 +107,8 @@ public class FriendRequestService {
                 sender.getUsername(),
                 fr.getReceiverId(),
                 receiver.getUsername(),
+                sender.getImgUrl(),
+                receiver.getImgUrl(),
                 fr.getStatus().name(),
                 fr.getCreatedAt()
         );
